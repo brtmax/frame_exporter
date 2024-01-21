@@ -99,9 +99,9 @@ def select_output_folder():
     root.destroy()
     return output_folder
 
-def process_video(video_path, base_output_folder):
+def process_video(video_path, base_output_folder, video_info_list):
     """
-    Process a single video file.
+    Process a single video file and append its information to the list.
     """
     video_name = os.path.splitext(os.path.basename(video_path))[0]
     output_folder = os.path.join(base_output_folder, video_name)
@@ -138,11 +138,7 @@ def process_video(video_path, base_output_folder):
                 elif event.key == pygame.K_e:
                     if first_frame is not None and last_frame is not None:
                         timestamps = save_frames(first_frame, last_frame, video_path, output_folder, accident_occurred)
-                        csv_filename = os.path.join(output_folder, video_name + "_timestamps.csv")
-                        with open(csv_filename, "w", newline="") as f:
-                            writer = csv.writer(f)
-                            writer.writerow(["Frame ID", "Timestamp", "Accident Status"])
-                            writer.writerows(timestamps)
+                        video_info_list.append((video_name, first_frame, last_frame, accident_occurred))
                         pygame.quit()
                         cap.release()
                         return  # Exit the function after saving
@@ -168,6 +164,8 @@ def process_video(video_path, base_output_folder):
 def main():
     args = parse_arguments()
 
+    video_info_list = []  # List to store video information
+
     if os.path.isdir(args.input_path):
         output_folder = select_output_folder()
         if not output_folder:
@@ -176,10 +174,24 @@ def main():
 
         video_files = glob.glob(os.path.join(args.input_path, "*.mp4"))  # Add other formats if needed
         for video_file in video_files:
-            process_video(video_file, output_folder)
+            process_video(video_file, output_folder, video_info_list)
+
+        # Write all video information to a single CSV file
+        csv_filename = os.path.join(output_folder, "output.csv")
+        with open(csv_filename, "w", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow(["Video Name", "First Frame", "Last Frame", "Accident Occurred"])
+            writer.writerows(video_info_list)
 
     elif os.path.isfile(args.input_path):
-        process_video(args.input_path, os.path.dirname(args.input_path))
+        process_video(args.input_path, os.path.dirname(args.input_path), video_info_list)
+
+        # Write all video information to a single CSV file
+        csv_filename = os.path.join(os.path.dirname(args.input_path), "output.csv")
+        with open(csv_filename, "w", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow(["Video Name", "First Frame", "Last Frame", "Accident Occurred"])
+            writer.writerows(video_info_list)
 
     else:
         print("Invalid input path. Please provide a valid video file or folder.")
