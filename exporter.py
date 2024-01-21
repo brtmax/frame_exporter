@@ -9,17 +9,13 @@ from tkinter import filedialog
 import glob
 
 def parse_arguments():
-    """
-    Parse command-line arguments.
-    """
+    """Parse command-line arguments."""
     parser = argparse.ArgumentParser(description='Video Frame Scrubber and Exporter.')
     parser.add_argument('input_path', nargs='?', help='Path to the video file or folder containing videos')
     return parser.parse_args()
 
 def print_usage():
-    """
-    Print usage instructions for the script.
-    """
+    """Print usage instructions for the script."""
     usage_text = """
     Usage Instructions:
     - Run the script with a video file path or a folder path as an argument.
@@ -35,9 +31,7 @@ def print_usage():
     print(usage_text)
 
 def initialize_video(video_path):
-    """
-    Initialize the video capture and pygame screen.
-    """
+    """Initialize the video capture and pygame screen."""
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
         print(f"Failed to load video: {video_path}")
@@ -52,9 +46,7 @@ def initialize_video(video_path):
     return cap, screen, frame_count, width, height
 
 def save_frames(first_frame, last_frame, video_path, save_folder, accident_occurred):
-    """
-    Save the first and last selected frames to a folder and record their timestamps.
-    """
+    """Save the first and last selected frames to a folder and record their timestamps."""
     cap = cv2.VideoCapture(video_path)
     timestamps = []
     for frame_number in [first_frame, last_frame]:
@@ -70,9 +62,7 @@ def save_frames(first_frame, last_frame, video_path, save_folder, accident_occur
     return timestamps
 
 def display_frame_info(img, current_frame, first_frame, last_frame, accident_occurred, height, width, screen):
-    """
-    Display frame information on the screen and resize frame to fit the window.
-    """
+    """Display frame information on the screen and resize frame to fit the window."""
     font = cv2.FONT_HERSHEY_SIMPLEX
     window_size = screen.get_size()
     resized_img = cv2.resize(img, window_size, interpolation=cv2.INTER_AREA)
@@ -90,9 +80,7 @@ def display_frame_info(img, current_frame, first_frame, last_frame, accident_occ
     screen.blit(frame, (0, 0))
 
 def select_output_folder():
-    """
-    Prompt the user to select an output folder.
-    """
+    """Prompt the user to select an output folder."""
     root = tk.Tk()
     root.withdraw()
     output_folder = filedialog.askdirectory(title="Select Output Folder")
@@ -100,9 +88,7 @@ def select_output_folder():
     return output_folder
 
 def process_video(video_path, base_output_folder, video_info_list):
-    """
-    Process a single video file and append its information to the list.
-    """
+    """Process a single video file and append its information to the list."""
     video_name = os.path.splitext(os.path.basename(video_path))[0]
     output_folder = os.path.join(base_output_folder, video_name)
     os.makedirs(output_folder, exist_ok=True)
