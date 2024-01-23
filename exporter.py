@@ -12,7 +12,14 @@ def parse_arguments():
     """Parse command-line arguments."""
     parser = argparse.ArgumentParser(description='Video Frame Scrubber and Exporter.')
     parser.add_argument('input_path', nargs='?', help='Path to the video file or folder containing videos')
-    return parser.parse_args()
+    parser.add_argument('--usage', action='store_true', help='Display usage instructions')
+    args = parser.parse_args()
+    
+    if args.usage:
+        print_usage()
+        sys.exit(0)
+    
+    return args
 
 def print_usage():
     """Print usage instructions for the script."""
@@ -53,11 +60,11 @@ def save_frames(first_frame, last_frame, video_path, save_folder, accident_occur
         cap.set(cv2.CAP_PROP_POS_FRAMES, frame_number)
         success, img = cap.read()
         if success:
-            frame_time = round(cap.get(cv2.CAP_PROP_POS_MSEC) / 1000, 1)
+            frame_time_ms = round(cap.get(cv2.CAP_PROP_POS_MSEC), 1)
             frame_filename = os.path.join(save_folder, f"frame_{frame_number}.jpg")
             cv2.imwrite(frame_filename, img)
             accident_status = "Accident" if accident_occurred else "No Accident"
-            timestamps.append((frame_number, frame_time, accident_status))
+            timestamps.append((frame_number, frame_time_ms, accident_status))
     cap.release()
     return timestamps
 
