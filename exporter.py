@@ -60,7 +60,7 @@ def save_frames(first_frame, last_frame, video_path, save_folder, accident_occur
         cap.set(cv2.CAP_PROP_POS_FRAMES, frame_number)
         success, img = cap.read()
         if success:
-            frame_time_ms = round(cap.get(cv2.CAP_PROP_POS_MSEC), 1)
+            frame_time_ms = cap.get(cv2.CAP_PROP_POS_MSEC)
             frame_filename = os.path.join(save_folder, f"frame_{frame_number}.jpg")
             cv2.imwrite(frame_filename, img)
             accident_status = "Accident" if accident_occurred else "No Accident"
@@ -93,6 +93,7 @@ def select_output_folder():
     output_folder = filedialog.askdirectory(title="Select Output Folder")
     root.destroy()
     return output_folder
+
 
 def process_video(video_path, base_output_folder, video_info_list):
     """Process a single video file and append its information to the list."""
@@ -131,7 +132,8 @@ def process_video(video_path, base_output_folder, video_info_list):
                 elif event.key == pygame.K_e:
                     if first_frame is not None and last_frame is not None:
                         timestamps = save_frames(first_frame, last_frame, video_path, output_folder, accident_occurred)
-                        video_info_list.append((video_name, first_frame, last_frame, accident_occurred))
+                        first_frame_ms, last_frame_ms = timestamps[0][1], timestamps[1][1]  # Extract milliseconds
+                        video_info_list.append((video_name, first_frame_ms, last_frame_ms, accident_occurred))
                         pygame.quit()
                         cap.release()
                         return  # Exit the function after saving
