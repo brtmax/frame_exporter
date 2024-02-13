@@ -34,6 +34,7 @@ def print_usage():
     - Press 'e' to export the selected frames and timestamps.
     - Press 'a' to toggle if an accident occurred in the video.
     - Press 'F11' to toggle full-screen mode.
+    - Press 'n' to skip to the next video.
     """
     print(usage_text)
 
@@ -108,7 +109,10 @@ def process_video(video_path, base_output_folder, video_info_list):
     current_frame = 0
     running = True
     fullscreen = False
-    paused = False  # Track pause state
+    paused = False
+    export_requested = False  # Track if an export has been requested
+    export_complete = False  # Track if the export is complete
+    events = []  # List to store events within the same video
 
     while running:
         for event in pygame.event.get():
@@ -133,11 +137,18 @@ def process_video(video_path, base_output_folder, video_info_list):
                 elif event.key == pygame.K_e:
                     if first_frame is not None and last_frame is not None:
                         timestamps = save_frames(first_frame, last_frame, video_path, output_folder, accident_occurred)
-                        first_frame_ms, last_frame_ms = timestamps[0][1], timestamps[1][1]  # Extract milliseconds
-                        video_info_list.append((video_name, first_frame_ms, last_frame_ms, accident_occurred))
-                        pygame.quit()
-                        cap.release()
-                        return  # Exit the function after saving
+                        first_frame_ms, last_frame_ms = timestamps[0][1], timestamps[1][1]
+                        events.append((video_name, first_frame_ms, last_frame_ms, accident_occurred))
+                        first_frame = None
+                        last_frame = None
+
+                    # Reset the screen to display the current frame
+                    cap.set(cv2.CAP_PROP_POS_FRAMES, current_frame)
+                    success, img = cap.read()
+                    if success:
+                        display_frame_info(img, current_frame, first_frame, last_frame, accident_occurred, height, width, screen)
+                        pygame.display.flip()
+                            
                 elif event.key == pygame.K_a:
                     accident_occurred = not accident_occurred
                 elif event.key == pygame.K_F11:
@@ -146,23 +157,44 @@ def process_video(video_path, base_output_folder, video_info_list):
                         screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
                     else:
                         screen = pygame.display.set_mode((width, height), pygame.RESIZABLE)
+                elif event.key == pygame.K_n:
+                    # Skip to the next video
+                    export_requested = False
+                    first_frame = None
+                    last_frame = None
+                    events = []  # Reset events list
+                    running = False  # Set running to False to break out of the while loop and proceed to the next video
+                    break
+        # Add the following block after the existing event handling block
+        if export_requested and not export_complete:
+            export_complete = True  # Set export completion flag to avoid repeated exports
+            pygame.time.delay(500)  # Delay to provide time for the 'e' key to be released
+            continue  # Skip to the next iteration to prevent further processing until the next frame is displayed
 
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_SPACE]:
-            paused = not paused
+        if not export_requested:
+            keys = pygame.key.get_pressed()
+            if keys[pygame.K_SPACE]:
+                paused = not paused
 
-        if not paused or keys[pygame.K_SPACE]:
-            if current_frame < frame_count:
-                cap.set(cv2.CAP_PROP_POS_FRAMES, current_frame)
-                success, img = cap.read()
-                if success:
-                    display_frame_info(img, current_frame, first_frame, last_frame, accident_occurred, height, width, screen)
-                    pygame.display.flip()
+            if not paused or keys[pygame.K_SPACE]:
+                if current_frame < frame_count:
+                    cap.set(cv2.CAP_PROP_POS_FRAMES, current_frame)
+                    success, img = cap.read()
+                    if success:
+                        display_frame_info(img, current_frame, first_frame, last_frame, accident_occurred, height, width, screen)
+                        pygame.display.flip()
 
-                    current_frame = min(frame_count - 1, current_frame + 1)  # Automatically advance to the next frame
+                        current_frame = min(frame_count - 1, current_frame + 1)  # Automatically advance to the next frame
 
     pygame.quit()
     cap.release()
+
+    # Export events to CSV after processing the entire video
+    if events:
+        csv_filename = os.path.join(output_folder, "output.csv")
+        with open(csv_filename, "a", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerows(events)
 
 def main():
     args = parse_arguments()
@@ -179,22 +211,8 @@ def main():
         for video_file in video_files:
             process_video(video_file, output_folder, video_info_list)
 
-        # Write all video information to a single CSV file
-        csv_filename = os.path.join(output_folder, "output.csv")
-        with open(csv_filename, "w", newline="") as f:
-            writer = csv.writer(f)
-            writer.writerow(["Video Name", "First Frame", "Last Frame", "Accident Occurred"])
-            writer.writerows(video_info_list)
-
     elif os.path.isfile(args.input_path):
         process_video(args.input_path, os.path.dirname(args.input_path), video_info_list)
-
-        # Write all video information to a single CSV file
-        csv_filename = os.path.join(os.path.dirname(args.input_path), "output.csv")
-        with open(csv_filename, "w", newline="") as f:
-            writer = csv.writer(f)
-            writer.writerow(["Video Name", "First Frame", "Last Frame", "Accident Occurred"])
-            writer.writerows(video_info_list)
 
     else:
         print("Invalid input path. Please provide a valid video file or folder.")
