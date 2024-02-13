@@ -142,6 +142,12 @@ def process_video(video_path, base_output_folder, video_info_list):
                         first_frame = None
                         last_frame = None
 
+                    if events:
+                        csv_filename = os.path.join(output_folder, "output.csv")
+                        with open(csv_filename, "a", newline="") as f:
+                            writer = csv.writer(f)
+                            writer.writerows(events)
+
                     # Reset the screen to display the current frame
                     cap.set(cv2.CAP_PROP_POS_FRAMES, current_frame)
                     success, img = cap.read()
