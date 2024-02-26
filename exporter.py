@@ -9,10 +9,17 @@ from tkinter import filedialog
 import glob
 
 def parse_arguments():
-    parser = argparse.ArgumentParser(description='Video Frame Scrubber and Exporter.')
+    parser = argparse.ArgumentParser(description='Video Frame Exporter.')
     parser.add_argument('input_path', nargs='?', help='Path to the video file or folder containing videos')
     parser.add_argument('--usage', action='store_true', help='Display usage instructions')
-    return parser.parse_args()
+
+    args = parser.parse_args()
+
+    if args.usage:
+        print_usage()
+        exit()
+
+    return args
 
 def print_usage():
     print("""
