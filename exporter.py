@@ -97,7 +97,7 @@ def process_video(video_path, base_output_folder, video_info_list):
     csv_filename = os.path.join(output_folder, f"{video_name}_output.csv")
     with open(csv_filename, "w", newline="") as f:
         writer = csv.writer(f)
-        writer.writerow(['First Frame ID', 'Timestamp', 'Last Frame ID', 'Timestamp', 'Time difference between timestamps', 'Accident Occurred'])
+        writer.writerow(['First ID', 'Timestamp', 'Last ID', 'Timestamp', 'Time Difference', 'Accident'])
 
     while running:
         for event in pygame.event.get():
@@ -124,6 +124,7 @@ def process_video(video_path, base_output_folder, video_info_list):
                         event_data = (first_frame, first_frame_ms, last_frame, last_frame_ms, time_difference_ms, accident_occurred)
                         write_csv(event_data, csv_filename)
                         first_frame, last_frame = None, None
+                        accident_occurred = False
                         cap.set(cv2.CAP_PROP_POS_FRAMES, current_frame)
                         success, img = cap.read()
                         if success:
