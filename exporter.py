@@ -95,12 +95,6 @@ def process_video(video_path, base_output_folder, video_info_list):
     current_frame, running, fullscreen, paused = 0, True, False, False
     events = []  # List to store video events
 
-    # Create CSV file for each video when it is opened
-    csv_filename = os.path.join(output_folder, f"{video_name}_output.csv")
-    with open(csv_filename, "w", newline="") as f:
-        writer = csv.writer(f)
-        writer.writerow(['First ID', 'Timestamp', 'Last ID', 'Timestamp', 'Time Difference', 'Accident'])
-
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -124,6 +118,11 @@ def process_video(video_path, base_output_folder, video_info_list):
                         first_frame_ms, last_frame_ms = round(timestamps[0][1], 3), round(timestamps[1][1], 3)
                         time_difference_ms = round(last_frame_ms - first_frame_ms, 3)
                         event_data = (first_frame, first_frame_ms, last_frame, last_frame_ms, time_difference_ms, accident_occurred)
+
+                        csv_filename = os.path.join(output_folder, f"{video_name}_output.csv")
+                        with open(csv_filename, "w", newline="") as f:
+                            writer = csv.writer(f)
+                            writer.writerow(['First ID', 'Timestamp', 'Last ID', 'Timestamp', 'Time Difference', 'Accident'])
                         write_csv(event_data, csv_filename)
                         first_frame, last_frame = None, None
                         accident_occurred = False
