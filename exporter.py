@@ -14,6 +14,9 @@ def parse_arguments():
     parser.add_argument('--usage', action='store_true', help='Display usage instructions')
 
     args = parser.parse_args()
+    if len(vars(args)) != 3:
+        raise ValueError("Invalid number of arguments.")
+        print_usage()
     return args
 
 def print_usage():
