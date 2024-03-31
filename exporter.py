@@ -14,11 +14,6 @@ def parse_arguments():
     parser.add_argument('--usage', action='store_true', help='Display usage instructions')
 
     args = parser.parse_args()
-
-    if args.usage:
-        print_usage()
-        exit()
-
     return args
 
 def print_usage():
@@ -40,7 +35,7 @@ def print_usage():
 def initialize_video(video_path):
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
-        sys.exit(f"Failed to load video: {video_path}")
+        sys.exit("Failed to load video: {video_path}")
     success, img = cap.read()
     height, width, _ = img.shape
     screen = pygame.display.set_mode((width, height), pygame.RESIZABLE)
@@ -160,6 +155,7 @@ def process_video(video_path, base_output_folder, video_info_list):
     cap.release()
 
 def main():
+    print_usage()
     args = parse_arguments()
     if os.path.isdir(args.input_path):
         video_info_list = []
