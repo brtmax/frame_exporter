@@ -95,6 +95,16 @@ def write_csv(event, csv_filename):
         writer = csv.writer(f)
         writer.writerow(event)
 
+def delete_exported_files(output_folder):
+    # Delete all files in output folder
+    for file in os.listdir(output_folder):
+        file_path = os.path.join(output_folder, file)
+        try:
+            if os.path.isfile(file_path):
+               os.unlink(file_path)
+        except Exception as e:
+            print(f"Failed to delete {file_path}: {e}")
+
 def process_video(video_path, base_output_folder):
     global video_history
     # Append the current video path to the history
@@ -102,6 +112,9 @@ def process_video(video_path, base_output_folder):
     video_name = os.path.splitext(os.path.basename(video_path))[0]
     output_folder = os.path.join(base_output_folder, video_name)
     os.makedirs(output_folder, exist_ok=True)
+
+    # Clean output folder at beginning of processing
+    delete_exported_files(output_folder)
 
     cap, screen, frame_count, width, height = initialize_video(video_path)
     first_frame, last_frame, accident_occurred = None, None, False
@@ -113,13 +126,16 @@ def process_video(video_path, base_output_folder):
             if event.type == pygame.QUIT:
                 running = False
             elif event.type == pygame.KEYDOWN:
+                # Mark first frame
                 if event.key == pygame.K_f:
                     first_frame = None if first_frame == current_frame else current_frame
                     last_frame = None if first_frame is None else last_frame
+                # Mark last game
                 elif event.key == pygame.K_l:
                     last_frame = None if last_frame == current_frame else current_frame
                 elif event.key in (pygame.K_COMMA, pygame.K_PERIOD):
                     current_frame = max(0, min(frame_count - 1, current_frame - 1 if event.key == pygame.K_COMMA else current_frame + 1))
+                # Export frames and csv
                 elif event.key == pygame.K_e:
                     if first_frame is not None and last_frame is not None:
                         timestamps = save_frames(first_frame, last_frame, video_path, output_folder, accident_occurred)
@@ -139,18 +155,22 @@ def process_video(video_path, base_output_folder):
                         if success:
                             display_frame_info(img, current_frame, first_frame, last_frame, accident_occurred, height, width, screen)
                             pygame.display.flip()
+                # Mark video with accident
                 elif event.key == pygame.K_a:
                     accident_occurred = not accident_occurred
+                # Fullscreen
                 elif event.key == pygame.K_F11:
                     fullscreen = not fullscreen
                     screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN) if fullscreen else pygame.display.set_mode((width, height), pygame.RESIZABLE)
+                # Go to next video
                 elif event.key == pygame.K_n:
                     first_frame, last_frame, events, running = None, None, [], False
+                # Pause & play
                 elif event.key == pygame.K_SPACE:
                     paused = not paused
                     pygame.time.set_timer(pygame.USEREVENT, 100) if paused else pygame.time.set_timer(pygame.USEREVENT, 0)
+                # Go to previous video
                 elif event.key == pygame.K_p:
-                    # Process the previous video
                     if len(video_history) >= 2:
                         previous_video_path = video_history[-2]
                         video_history.pop()  # Remove the current video from history
